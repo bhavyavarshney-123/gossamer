@@ -169,7 +169,7 @@ func TestJustification_fromCommit(t *testing.T) {
 	require.Equal(t, expJustification, justification.Justification)
 }
 
-func TestJustification_decodeAndVerifyFinalizes(t *testing.T) {
+func TestDecodeGrandpaJustificationVerifyFinalizes(t *testing.T) {
 	var a hash.H256 = "a\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00" //nolint:lll
 
 	// Invalid Encoding

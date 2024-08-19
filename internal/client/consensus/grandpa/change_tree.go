@@ -27,7 +27,7 @@ var (
 
 // ChangeTree keeps track of the changes per fork allowing
 // n forks in the same structure. This structure is intended
-// to represent an acyclic directed graph where the hashNumber children are
+// to represent an acyclic directed graph where the HashNumber children are
 // placed by descendency order and number, you can ensure an
 // node ancestry using the `isDescendantOfFunc`
 type ChangeTree[H comparable, N constraints.Unsigned] struct {
@@ -463,7 +463,7 @@ func (ct *ChangeTree[H, N]) swapRemove(roots []*PendingChangeNode[H, N], index N
 	if roots[index] != nil {
 		val = *roots[index]
 	} else {
-		panic("nil pending hashNumber node")
+		panic("nil pending HashNumber node")
 	}
 
 	lastElem := roots[len(roots)-1]

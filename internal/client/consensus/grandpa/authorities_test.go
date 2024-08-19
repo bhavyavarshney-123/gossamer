@@ -16,8 +16,6 @@ const (
 	hashB = "hash_b"
 	hashC = "hash_c"
 	hashD = "hash_d"
-	// key   = dummyAuthID(1)
-	// key2  = dummyAuthID(2)
 )
 
 func staticIsDescendentOf[H comparable](value bool) IsDescendentOf[H] {
@@ -246,7 +244,7 @@ func TestApplyChange(t *testing.T) {
 	pendingChanges := authorities.pendingChanges()
 	require.Equal(t, expectedChanges, pendingChanges)
 
-	// finalising hashC won't enact the hashNumber signalled at hashA but it will prune out
+	// finalising hashC won't enact the HashNumber signalled at hashA but it will prune out
 	// hashB
 	status, err := authorities.applyStandardChanges(
 		hashC,
@@ -288,9 +286,9 @@ func TestApplyChange(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	expectedBlockInfo := &hashNumber[string, uint]{
-		hash:   hashD,
-		number: 15,
+	expectedBlockInfo := &HashNumber[string, uint]{
+		Hash:   hashD,
+		Number: 15,
 	}
 
 	require.True(t, status.Changed)
@@ -388,9 +386,9 @@ func TestDisallowMultipleChangesBeingFinalizedAtOnce(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, status.Changed)
 
-	expectedBlockInfo := &hashNumber[string, uint]{
-		hash:   hashB,
-		number: 15,
+	expectedBlockInfo := &HashNumber[string, uint]{
+		Hash:   hashB,
+		Number: 15,
 	}
 	expAuthSetChange := AuthoritySetChanges[uint]{setIDNumber[uint]{
 		SetID:       0,
@@ -410,9 +408,9 @@ func TestDisallowMultipleChangesBeingFinalizedAtOnce(t *testing.T) {
 	require.NoError(t, err)
 	require.True(t, status.Changed)
 
-	expectedBlockInfo = &hashNumber[string, uint]{
-		hash:   hashD,
-		number: 40,
+	expectedBlockInfo = &HashNumber[string, uint]{
+		Hash:   hashD,
+		Number: 40,
 	}
 	expAuthSetChange = AuthoritySetChanges[uint]{
 		setIDNumber[uint]{
@@ -485,7 +483,7 @@ func TestEnactsStandardChangeWorks(t *testing.T) {
 		}
 	})
 
-	// hashC won't finalise the existing hashNumber since it isn't a descendent
+	// hashC won't finalise the existing HashNumber since it isn't a descendent
 	res, err := authorities.EnactsStandardChange(hashC, 15, isDescOf)
 	require.NoError(t, err)
 	require.Nil(t, res)
@@ -495,12 +493,12 @@ func TestEnactsStandardChangeWorks(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, res)
 
-	// but it should work at depth 15 (hashNumber height + depth)
+	// but it should work at depth 15 (HashNumber height + depth)
 	res, err = authorities.EnactsStandardChange(hashD, 15, isDescOf)
 	require.NoError(t, err)
 	require.Equal(t, true, *res)
 
-	// finalising "hash_e" at depth 20 will trigger hashNumber at hashB, but
+	// finalising "hash_e" at depth 20 will trigger HashNumber at hashB, but
 	// it can't be applied yet since hashA must be applied first
 	res, err = authorities.EnactsStandardChange("hash_e", 30, isDescOf)
 	require.NoError(t, err)
@@ -596,7 +594,7 @@ func TestForceChanges(t *testing.T) {
 	require.NoError(t, err)
 	require.Nil(t, resForced)
 
-	// on time -- chooses the right hashNumber for this fork
+	// on time -- chooses the right HashNumber for this fork
 	exp := appliedChanges[string, uint]{
 		median: 42,
 		set: AuthoritySet[string, uint]{
@@ -637,7 +635,7 @@ func TestForceChangesWithNoDelay(t *testing.T) {
 	finalisedKind := Best[uint]{0}
 	delayKindFinalized := newDelayKind[uint](finalisedKind)
 
-	// we create a forced hashNumber with no Delay
+	// we create a forced HashNumber with no Delay
 	changeA := PendingChange[string, uint]{
 		NextAuthorities: setA,
 		Delay:           0,
@@ -731,7 +729,7 @@ func TestForceChangesBlockedByStandardChanges(t *testing.T) {
 	err = authorities.addPendingChange(changeD, staticIsDescendentOf[string](true))
 	require.NoError(t, err)
 
-	// the forced hashNumber cannot be applied since the pending changes it depends on
+	// the forced HashNumber cannot be applied since the pending changes it depends on
 	// have not been applied yet.
 	_, err = authorities.applyForcedChanges(
 		"hash_d45",
@@ -742,7 +740,7 @@ func TestForceChangesBlockedByStandardChanges(t *testing.T) {
 	require.ErrorIs(t, err, errForcedAuthoritySetChangeDependencyUnsatisfied)
 	require.Equal(t, 0, len(authorities.AuthoritySetChanges))
 
-	// we apply the first pending standard hashNumber at #15
+	// we apply the first pending standard HashNumber at #15
 	expChanges := AuthoritySetChanges[uint]{
 		setIDNumber[uint]{
 			SetID:       0,
@@ -758,7 +756,7 @@ func TestForceChangesBlockedByStandardChanges(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expChanges, authorities.AuthoritySetChanges)
 
-	// but the forced hashNumber still depends on the next standard hashNumber
+	// but the forced HashNumber still depends on the next standard HashNumber
 	_, err = authorities.applyForcedChanges(
 		"hash_d45",
 		45,
@@ -768,7 +766,7 @@ func TestForceChangesBlockedByStandardChanges(t *testing.T) {
 	require.ErrorIs(t, err, errForcedAuthoritySetChangeDependencyUnsatisfied)
 	require.Equal(t, expChanges, authorities.AuthoritySetChanges)
 
-	// we apply the pending standard hashNumber at #20
+	// we apply the pending standard HashNumber at #20
 	expChanges = append(expChanges, setIDNumber[uint]{
 		SetID:       1,
 		BlockNumber: 20,
@@ -782,8 +780,8 @@ func TestForceChangesBlockedByStandardChanges(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, expChanges, authorities.AuthoritySetChanges)
 
-	// afterwards the forced hashNumber at #45 can already be applied since it signals
-	// that finality stalled at #31, and the next pending standard hashNumber is effective
+	// afterwards the forced HashNumber at #45 can already be applied since it signals
+	// that finality stalled at #31, and the next pending standard HashNumber is effective
 	// at #35. subsequent forced changes on the same branch must be kept
 	expChanges = append(expChanges, setIDNumber[uint]{
 		SetID:       2,
@@ -878,43 +876,43 @@ func TestNextChangeWorks(t *testing.T) {
 	err = authorities.addPendingChange(changeA1, isDescOf)
 	require.NoError(t, err)
 
-	// the earliest hashNumber at block `best_a` should be the hashNumber at A0 (#5)
-	expChange := &hashNumber[string, uint]{
-		hash:   "hash_a0",
-		number: 5,
+	// the earliest HashNumber at block `best_a` should be the HashNumber at A0 (#5)
+	expChange := &HashNumber[string, uint]{
+		Hash:   "hash_a0",
+		Number: 5,
 	}
 	c, err := authorities.nextChange(hashB, isDescOf)
 	require.NoError(t, err)
 	require.Equal(t, expChange, c)
 
-	// the earliest hashNumber at block `best_b` should be the hashNumber at B (#4)
-	expChange = &hashNumber[string, uint]{
-		hash:   hashB,
-		number: 4,
+	// the earliest HashNumber at block `best_b` should be the HashNumber at B (#4)
+	expChange = &HashNumber[string, uint]{
+		Hash:   hashB,
+		Number: 4,
 	}
 	c, err = authorities.nextChange("best_b", isDescOf)
 	require.NoError(t, err)
 	require.Equal(t, expChange, c)
 
-	// we apply the hashNumber at A0 which should prune it and the fork at B
+	// we apply the HashNumber at A0 which should prune it and the fork at B
 	_, err = authorities.applyStandardChanges("hash_a0", 5, isDescOf, nil)
 	require.NoError(t, err)
 
-	// the next hashNumber is now at A1 (#10)
-	expChange = &hashNumber[string, uint]{
-		hash:   "hash_a1",
-		number: 10,
+	// the next HashNumber is now at A1 (#10)
+	expChange = &HashNumber[string, uint]{
+		Hash:   "hash_a1",
+		Number: 10,
 	}
 	c, err = authorities.nextChange("best_a", isDescOf)
 	require.NoError(t, err)
 	require.Equal(t, expChange, c)
 
-	// there's no longer any pending hashNumber at `best_b` fork
+	// there's no longer any pending HashNumber at `best_b` fork
 	c, err = authorities.nextChange("best_b", isDescOf)
 	require.NoError(t, err)
 	require.Nil(t, c)
 
-	// we a forced hashNumber at A10 (#8)
+	// we a forced HashNumber at A10 (#8)
 	finalisedKind2 := Best[uint]{0}
 	delayKindFinalized2 := newDelayKind[uint](finalisedKind2)
 	changeA10 := PendingChange[string, uint]{
@@ -928,10 +926,10 @@ func TestNextChangeWorks(t *testing.T) {
 	err = authorities.addPendingChange(changeA10, staticIsDescendentOf[string](false))
 	require.NoError(t, err)
 
-	// it should take precedence over the hashNumber at A1 (#10)
-	expChange = &hashNumber[string, uint]{
-		hash:   "hash_a10",
-		number: 8,
+	// it should take precedence over the HashNumber at A1 (#10)
+	expChange = &HashNumber[string, uint]{
+		Hash:   "hash_a10",
+		Number: 8,
 	}
 	c, err = authorities.nextChange("best_a", isDescOf)
 	require.NoError(t, err)
@@ -993,7 +991,7 @@ func TestMaintainsAuthorityListInvariants(t *testing.T) {
 		DelayKind:       delayKindFinalized,
 	}
 
-	// pending hashNumber contains an empty authority set
+	// pending HashNumber contains an empty authority set
 	err = authoritySet.addPendingChange(invalidChangeEmptyAuthorities, staticIsDescendentOf[string](false))
 	require.ErrorIs(t, err, errInvalidAuthoritySet)
 
@@ -1008,7 +1006,7 @@ func TestMaintainsAuthorityListInvariants(t *testing.T) {
 		DelayKind:       delayKindBest,
 	}
 
-	// pending hashNumber contains an authority set
+	// pending HashNumber contains an authority set
 	// where one authority has weight of 0
 	err = authoritySet.addPendingChange(invalidChangeAuthoritiesWeight, staticIsDescendentOf[string](false))
 	require.ErrorIs(t, err, errInvalidAuthoritySet)
@@ -1040,8 +1038,8 @@ func TestCleanUpStaleForcedChangesWhenApplyingStandardChange(t *testing.T) {
 	//            \
 	//             (#C0) - [#D]
 	//
-	// () - Standard hashNumber
-	// [] - Forced hashNumber
+	// () - Standard HashNumber
+	// [] - Forced HashNumber
 	isDescOf := isDescendentof(func(h1 string, h2 string) (bool, error) {
 		hashes := []string{
 			"B",
@@ -1103,8 +1101,8 @@ func TestCleanUpStaleForcedChangesWhenApplyingStandardChange(t *testing.T) {
 	addPendingChangeFunction(15, "C3", true)
 	addPendingChangeFunction(20, "D", true)
 
-	// applying the standard hashNumber at A should not prune anything
-	// other then the hashNumber that was applied
+	// applying the standard HashNumber at A should not prune anything
+	// other then the HashNumber that was applied
 	_, err := authorities.applyStandardChanges("A", 5, isDescOf, nil)
 	require.NoError(t, err)
 	require.Equal(t, 6, len(authorities.pendingChanges()))
@@ -1146,8 +1144,8 @@ func TestCleanUpStaleForcedChangesWhenApplyingStandardChangeAlternateCase(t *tes
 	//            \
 	//             (#C0) - [#D]
 	//
-	// () - Standard hashNumber
-	// [] - Forced hashNumber
+	// () - Standard HashNumber
+	// [] - Forced HashNumber
 	isDescOf := isDescendentof(func(h1 string, h2 string) (bool, error) {
 		hashes := []string{
 			"B",
@@ -1209,8 +1207,8 @@ func TestCleanUpStaleForcedChangesWhenApplyingStandardChangeAlternateCase(t *tes
 	addPendingChangeFunction(15, "C3", true)
 	addPendingChangeFunction(20, "D", true)
 
-	// applying the standard hashNumber at A should not prune anything
-	// other then the hashNumber that was applied
+	// applying the standard HashNumber at A should not prune anything
+	// other then the HashNumber that was applied
 	_, err := authorities.applyStandardChanges("A", 5, isDescOf, nil)
 	require.NoError(t, err)
 	require.Equal(t, 6, len(authorities.pendingChanges()))

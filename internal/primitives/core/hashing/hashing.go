@@ -7,8 +7,8 @@ import (
 	"golang.org/x/crypto/blake2b"
 )
 
-// Do a Blake2 256-bit hash and return result.
-func Blake2_256(data []byte) [32]byte {
+// BlakeTwo256 returns a Blake2 256-bit hash of the input data
+func BlakeTwo256(data []byte) [32]byte {
 	h, err := blake2b.New256(nil)
 	if err != nil {
 		panic(err)

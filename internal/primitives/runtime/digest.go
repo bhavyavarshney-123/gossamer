@@ -5,13 +5,18 @@ package runtime
 
 // Digest item that is able to encode/decode 'system' digest items and
 // provide opaque access to other items.
-type DigestItems interface {
+type DigestItemTypes interface {
 	PreRuntime | Consensus | Seal | Other | RuntimeEnvironmentUpdated
 }
 
 // Digest item that is able to encode/decode 'system' digest items and
 // provide opaque access to other items.
 type DigestItem any
+
+// NewDigestItem is constructor for DigestItem
+func NewDigestItem[T DigestItemTypes](item T) DigestItem {
+	return NewDigestItem(item)
+}
 
 // A pre-runtime digest.
 //
@@ -52,7 +57,7 @@ type Other []byte
 // environment is updated.
 type RuntimeEnvironmentUpdated struct{}
 
-// Generic header digest.
+// Digest is a header digest.
 type Digest struct {
 	// A list of logs in the digest.
 	Logs []DigestItem
@@ -61,4 +66,14 @@ type Digest struct {
 // Push new digest item.
 func (d *Digest) Push(item DigestItem) {
 	d.Logs = append(d.Logs, item)
+}
+
+// Pop a digest item.
+func (d *Digest) Pop() DigestItem {
+	if len(d.Logs) == 0 {
+		return nil
+	}
+	item := d.Logs[len(d.Logs)-1]
+	d.Logs = d.Logs[:len(d.Logs)-1]
+	return item
 }

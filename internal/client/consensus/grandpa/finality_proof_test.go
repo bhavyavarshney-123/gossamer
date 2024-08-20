@@ -202,7 +202,7 @@ func newHeader(number uint64) *generic.Header[uint64, hash.H256, runtime.BlakeTw
 	}
 	header := generic.NewHeader[uint64, hash.H256, runtime.BlakeTwo256](
 		number, hash.H256(""), hash.H256(""), parentHash, runtime.Digest{})
-	return &header
+	return header
 }
 
 func TestNewHeader(t *testing.T) {
@@ -299,7 +299,7 @@ func TestFinalityProof_UsingAuthoritySetChangesWorks(t *testing.T) {
 		ConsensusEngineID:    primitives.GrandpaEngineID,
 		EncodedJustification: scale.MustMarshal(grandpaJust8),
 	}
-	blockchainBackend.EXPECT().Justifications(block8.Hash()).Return(&runtime.Justifications{justification}, nil)
+	blockchainBackend.EXPECT().Justifications(block8.Hash()).Return(runtime.Justifications{justification}, nil)
 
 	blockchainBackend.EXPECT().ExpectBlockHashFromID(uint64(7)).Return(block7.Hash(), nil)
 	blockchainBackend.EXPECT().ExpectHeader(block7.Hash()).Return(block7.Header(), nil)

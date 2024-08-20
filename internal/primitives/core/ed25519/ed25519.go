@@ -52,7 +52,7 @@ func deriveHardJunction(secretSeed seed, cc [32]byte) seed {
 		CC         [32]byte
 	}{"Ed25519HDKD", secretSeed, cc}
 	encoded := scale.MustMarshal(tuple)
-	return hashing.Blake2_256(encoded)
+	return hashing.BlakeTwo256(encoded)
 }
 
 // A key pair.

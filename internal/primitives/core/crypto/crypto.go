@@ -57,7 +57,7 @@ func NewDeriveJunctionSoft(index any) (DeriveJunctionSoft, error) {
 	}
 
 	if len(data) > 32 {
-		cc = hashing.Blake2_256(data)
+		cc = hashing.BlakeTwo256(data)
 	} else {
 		copy(cc[:], data)
 	}

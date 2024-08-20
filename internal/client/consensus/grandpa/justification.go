@@ -73,7 +73,7 @@ func (dgj *decodeGrandpaJustification[H, N, Hasher]) UnmarshalSCALE(reader io.Re
 	dgj.Justification.Commit = rch.Commit
 	dgj.Justification.VoteAncestries = make([]runtime.Header[N, H], len(rch.Headers))
 	for i, header := range rch.Headers {
-		dgj.Justification.VoteAncestries[i] = header
+		dgj.Justification.VoteAncestries[i] = &header
 	}
 	return
 }
@@ -139,7 +139,7 @@ func NewJustificationFromCommit[
 					fmt.Errorf("%w: invalid precommits for target commit", errBadJustification)
 			}
 
-			currentHeader := *header
+			currentHeader := header
 
 			// NOTE: this should never happen as we pick the lowest block
 			// as base and only traverse backwards from the other blocks

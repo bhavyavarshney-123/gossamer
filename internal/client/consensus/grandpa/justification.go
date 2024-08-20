@@ -169,8 +169,8 @@ func NewJustificationFromCommit[
 	}, nil
 }
 
-// Decode a GRANDPA justification and validate the commit and the votes'
-// ancestry proofs finalize the given block.
+// DecodeGrandpaJustificationVerifyFinalizes will decode a GRANDPA justification and validate the commit and
+// the votes' ancestry proofs finalize the given block.
 func DecodeGrandpaJustificationVerifyFinalizes[
 	Hash runtime.Hash,
 	N runtime.Number,
@@ -198,7 +198,7 @@ func DecodeGrandpaJustificationVerifyFinalizes[
 	return *justification, justification.verifyWithVoterSet(setID, voters)
 }
 
-// Verify Validate the commit and the votes' ancestry proofs.
+// Verify will validate the commit and the votes' ancestry proofs.
 func (j *GrandpaJustification[Hash, N]) Verify(setID uint64, authorities primitives.AuthorityList) error {
 	var weights []grandpa.IDWeight[string]
 	for _, authority := range authorities {
@@ -321,7 +321,7 @@ func (j *GrandpaJustification[Hash, N]) verifyWithVoterSet(
 	return nil
 }
 
-// Target The target block NumberField and HashField that this justifications proves finality for
+// Target is the target block NumberField and HashField that this justifications proves finality for
 func (j *GrandpaJustification[Hash, N]) Target() HashNumber[Hash, N] {
 	return HashNumber[Hash, N]{
 		Number: j.Justification.Commit.TargetNumber,
@@ -329,7 +329,7 @@ func (j *GrandpaJustification[Hash, N]) Target() HashNumber[Hash, N] {
 	}
 }
 
-// ancestryChain A utility trait implementing `finality_grandpa::Chain` using a given set of headers.
+// ancestryChain a utility trait implementing `grandpa.Chain` using a given set of headers.
 // This is useful when validating commits, using the given set of headers to
 // verify a valid ancestry route to the target commit block.
 type ancestryChain[Hash runtime.Hash, N runtime.Number] struct {

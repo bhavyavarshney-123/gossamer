@@ -21,11 +21,11 @@ import (
 // A secret seed.
 type seed [32]byte
 
-// A public key.
+// A Public key.
 type Public [32]byte
 
-// Return a `Vec<u8>` filled with raw data.
-func (p Public) ToRawVec() []byte {
+// Bytes returns a byte slice
+func (p Public) Bytes() []byte {
 	return p[:]
 }
 
@@ -34,11 +34,11 @@ func (p Public) Verify(sig Signature, message []byte) bool {
 	return ed25519.Verify(p[:], message, sig[:])
 }
 
-// A new instance from the given 32-byte `data`.
+// NewPublic creates a new instance from the given 32-byte `data`.
 //
 // NOTE: No checking goes on to ensure this is a real public key. Only use it if
-// you are certain that the array actually is a pubkey. GIGO!
-func NewPublicFromRaw(data [32]byte) Public {
+// you are certain that the array actually is a pubkey.
+func NewPublic(data [32]byte) Public {
 	return Public(data)
 }
 
@@ -55,7 +55,7 @@ func deriveHardJunction(secretSeed seed, cc [32]byte) seed {
 	return hashing.BlakeTwo256(encoded)
 }
 
-// A key pair.
+// Pair is a key pair.
 type Pair struct {
 	public gocrypto.PublicKey
 	secret ed25519.PrivateKey
@@ -77,14 +77,14 @@ func (p Pair) Derive(path []crypto.DeriveJunction, seed *[32]byte) (crypto.Pair[
 	return pair, acc, nil
 }
 
-// Get the seed for this key.
+// Seed is the seed for this key.
 func (p Pair) Seed() [32]byte {
 	var seed [32]byte
 	copy(seed[:], p.secret.Seed())
 	return seed
 }
 
-// Get the public key.
+// Public will return the public key.
 func (p Pair) Public() crypto.Public[Signature] {
 	pubKey, ok := p.public.(ed25519.PublicKey)
 	if !ok {
@@ -109,7 +109,7 @@ func (p Pair) Sign(message []byte) Signature {
 	return sig
 }
 
-// Generate new secure (random) key pair.
+// NewGeneratedPair will generate new secure (random) key pair.
 //
 // This is only for ephemeral keys really, since you won't have access to the secret key
 // for storage. If you want a persistent key pair, use `generate_with_phrase` instead.
@@ -125,7 +125,7 @@ func NewGeneratedPair() (Pair, [32]byte) {
 	return NewPairFromSeed(seed), seed
 }
 
-// Generate new secure (random) key pair and provide the recovery phrase.
+// NewGeneratedPairWithPhrase will generate new secure (random) key pair and provide the recovery phrase.
 //
 // You can recover the same key later with `from_phrase`.
 //
@@ -147,7 +147,7 @@ func NewGeneratedPairWithPhrase(password *string) (Pair, string, [32]byte) {
 	return pair, phrase, seed
 }
 
-// Returns the KeyPair from the English BIP39 seed `phrase`, or `None` if it's invalid.
+// NewPairFromPhrase returns the KeyPair from the English BIP39 seed `phrase`, or `None` if it's invalid.
 func NewPairFromPhrase(phrase string, password *string) (pair Pair, seed [32]byte, err error) {
 	pass := ""
 	if password != nil {
@@ -167,7 +167,7 @@ func NewPairFromPhrase(phrase string, password *string) (pair Pair, seed [32]byt
 	return NewPairFromSeedSlice(seedSlice), seed, nil
 }
 
-// Generate new key pair from the provided `seed`.
+// NewPairFromSeed will generate new key pair from the provided `seed`.
 //
 // @WARNING: THIS WILL ONLY BE SECURE IF THE `seed` IS SECURE. If it can be guessed
 // by an attacker then they can also derive your key.
@@ -175,7 +175,7 @@ func NewPairFromSeed(seed [32]byte) Pair {
 	return NewPairFromSeedSlice(seed[:])
 }
 
-// Make a new key pair from secret seed material. The slice must be the correct size or
+// NewPairFromSeedSlice will make a new key pair from secret seed material. The slice must be the correct size or
 // it will return `None`.
 //
 // @WARNING: THIS WILL ONLY BE SECURE IF THE `seed` IS SECURE. If it can be guessed
@@ -189,22 +189,22 @@ func NewPairFromSeedSlice(seedSlice []byte) Pair {
 	}
 }
 
-// Interprets the string `s` in order to generate a key Pair. Returns both the pair and an
-// optional seed, in the case that the pair can be expressed as a direct derivation from a seed
-// (some cases, such as Sr25519 derivations with path components, cannot).
+// NewPairFromStringWithSeed interprets the string `s` in order to generate a key Pair. Returns
+// both the pair and an optional seed, in the case that the pair can be expressed as a direct
+// derivation from a seed (some cases, such as Sr25519 derivations with path components, cannot).
 //
 // This takes a helper function to do the key generation from a phrase, password and
 // junction iterator.
 //
 // - If `s` is a possibly `0x` prefixed 64-digit hex string, then it will be interpreted
-// directly as a `MiniSecretKey` (aka "seed" in `subkey`).
+// directly as a secret key (aka "seed" in `subkey`).
 // - If `s` is a valid BIP-39 key phrase of 12, 15, 18, 21 or 24 words, then the key will
 // be derived from it. In this case:
 //   - the phrase may be followed by one or more items delimited by `/` characters.
 //   - the path may be followed by `///`, in which case everything after the `///` is treated
 //
 // as a password.
-//   - If `s` begins with a `/` character it is prefixed with the Substrate public `DEV_PHRASE`
+//   - If `s` begins with a `/` character it is prefixed with the Substrate public `DevPhrase`
 //     and
 //
 // interpreted as above.
@@ -219,7 +219,7 @@ func NewPairFromSeedSlice(seedSlice []byte) Pair {
 // Similarly an empty password (ending the SURI with `///`) is perfectly valid and will
 // generally be equivalent to no password at all.
 //
-// `None` is returned if no matches are found.
+// `nil` is returned if no matches are found.
 func NewPairFromStringWithSeed(s string, passwordOverride *string) (
 	pair crypto.Pair[[32]byte, Signature], seed [32]byte, err error,
 ) {
@@ -255,9 +255,7 @@ func NewPairFromStringWithSeed(s string, passwordOverride *string) (
 	return root.Derive(sURI.Junctions, &seed)
 }
 
-// Interprets the string `s` in order to generate a key pair.
-//
-// See [`from_string_with_seed`](Pair::from_string_with_seed) for more extensive documentation.
+// NewPairFromString interprets the string `s` in order to generate a key pair.
 func NewPairFromString(s string, passwordOverride *string) (crypto.Pair[[32]byte, Signature], error) {
 	pair, _, err := NewPairFromStringWithSeed(s, passwordOverride)
 	return pair, err
@@ -265,13 +263,13 @@ func NewPairFromString(s string, passwordOverride *string) (crypto.Pair[[32]byte
 
 var _ crypto.Pair[[32]byte, Signature] = Pair{}
 
-// A signature (a 512-bit value).
+// Signature is a signature (a 512-bit value).
 type Signature [64]byte
 
-// A new instance from the given 64-byte `data`.
+// NewSignatureFromRaw constructors a new instance from the given 64-byte `data`.
 //
 // NOTE: No checking goes on to ensure this is a real signature. Only use it if
-// you are certain that the array actually is a signature. GIGO!
+// you are certain that the array actually is a signature.
 func NewSignatureFromRaw(data [64]byte) Signature {
 	return Signature(data)
 }

@@ -10,13 +10,13 @@ import (
 	"github.com/ChainSafe/gossamer/internal/primitives/core/ed25519"
 )
 
+// Public key used in grandpa
 type Public = ed25519.Public
 
-var (
-	_ crypto.Public[Signature] = Public{}
-)
+var _ crypto.Public[Signature] = Public{}
 
-func NewPublicFromSlice(data []byte) (Public, error) {
+// NewPublic is constructor for Public
+func NewPublic(data []byte) (Public, error) {
 	if len(data) != 32 {
 		return Public{}, fmt.Errorf("invalid public key from data: %v", data)
 	}
@@ -25,4 +25,5 @@ func NewPublicFromSlice(data []byte) (Public, error) {
 	return pub, nil
 }
 
+// Signature is signature type used in grandpa
 type Signature = ed25519.Signature

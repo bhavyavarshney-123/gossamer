@@ -13,12 +13,12 @@ import (
 	"github.com/ChainSafe/gossamer/pkg/scale"
 )
 
-// The root phrase for our publicly known keys.
+// DevPhrase is the root phrase for our publicly known keys.
 const DevPhrase = "bottom drive obey lake curtain smoke basket hold race lonely fit walk"
 
-// A since derivation junction description. It is the single parameter used when creating
-// a new secret key from an existing secret key and, in the case of `SoftRaw` and `SoftIndex`
-// a new public key from an existing public key.
+// DeriveJunction is a since derivation junction description. It is the single parameter
+// used when creating a new secret key from an existing secret key and, in the case of
+// `SoftRaw` and `SoftIndex` a new public key from an existing public key.
 type DeriveJunction struct {
 	inner any
 }
@@ -33,13 +33,13 @@ func (dj DeriveJunction) Value() any {
 	return dj.inner
 }
 
-// Soft (vanilla) derivation. Public keys have a correspondent derivation.
+// DeriveJunctionSoft is a soft (vanilla) derivation. Public keys have a correspondent derivation.
 type DeriveJunctionSoft [32]byte
 
-// Hard ("hardened") derivation. Public keys do not have a correspondent derivation.
+// DeriveJunctionHard is a hard ("hardened") derivation. Public keys do not have a correspondent derivation.
 type DeriveJunctionHard [32]byte
 
-// Consume self to return a hard derive junction with the same chain code.
+// Harden will consume self to return a hard derive junction with the same chain code.
 func (dj *DeriveJunction) Harden() DeriveJunction {
 	switch inner := dj.inner.(type) {
 	case DeriveJunctionSoft:
@@ -48,7 +48,7 @@ func (dj *DeriveJunction) Harden() DeriveJunction {
 	return *dj
 }
 
-// Create a new soft (vanilla) DeriveJunction from a given, encodable, value.
+// NewDeriveJunctionSoft creates a new soft (vanilla) DeriveJunction from a given, encodable, value.
 func NewDeriveJunctionSoft(index any) (DeriveJunctionSoft, error) {
 	var cc = [32]byte{}
 	data, err := scale.Marshal(index)
@@ -64,6 +64,7 @@ func NewDeriveJunctionSoft(index any) (DeriveJunctionSoft, error) {
 	return DeriveJunctionSoft(cc), nil
 }
 
+// NewDeriveJunctionFromString is constructor of DeriveJunction from string representation.
 func NewDeriveJunctionFromString(j string) DeriveJunction {
 	hard := false
 	trimmed := strings.TrimPrefix(j, "/")
@@ -99,6 +100,7 @@ func NewDeriveJunctionFromString(j string) DeriveJunction {
 	}
 }
 
+// NewDeriveJunction is constructor for DeriveJunction
 func NewDeriveJunction[V DeriveJunctions](value V) DeriveJunction {
 	return DeriveJunction{
 		inner: value,
@@ -110,32 +112,32 @@ var secretPhraseRegex = regexp.MustCompile(`^(?P<phrase>[\d\w ]+)?(?P<path>(//?[
 var junctionRegex = regexp.MustCompile(`/(/?[^/]+)`)
 
 // Trait used for types that are really just a fixed-length array.
-type ByteArray interface {
+type Bytes interface {
 	// Return a `Vec<u8>` filled with raw data.
-	ToRawVec() []byte
+	Bytes() []byte
 }
 
 // Trait suitable for typical cryptographic key public type.
 type Public[Signature any] interface {
-	ByteArray
+	Bytes
 
 	// Verify a signature on a message. Returns true if the signature is good.
 	Verify(sig Signature, message []byte) bool
 }
 
-// A secret uri (`SURI`) that can be used to generate a key pair.
+// SecretURI A secret uri (`SURI`) that can be used to generate a key pair.
 //
 // The `SURI` can be parsed from a string. The string is interpreted in the following way:
 //
 // - If `string` is a possibly `0x` prefixed 64-digit hex string, then it will be interpreted
-// directly as a `MiniSecretKey` (aka "seed" in `subkey`).
+// directly as a secret key (aka "seed" in `subkey`).
 // - If `string` is a valid BIP-39 key phrase of 12, 15, 18, 21 or 24 words, then the key will
 // be derived from it. In this case:
 //   - the phrase may be followed by one or more items delimited by `/` characters.
 //   - the path may be followed by `///`, in which case everything after the `///` is treated
 //
 // as a password.
-//   - If `string` begins with a `/` character it is prefixed with the Substrate public `DEV_PHRASE`
+//   - If `string` begins with a `/` character it is prefixed with the public `DevPhrase`
 //     and interpreted as above.
 //
 // In this case they are interpreted as HDKD junctions; purely numeric items are interpreted as
@@ -147,45 +149,6 @@ type Public[Signature any] interface {
 // Notably, integer junction indices may be legally prefixed with arbitrary number of zeros.
 // Similarly an empty password (ending the `SURI` with `///`) is perfectly valid and will
 // generally be equivalent to no password at all.
-//
-// # Example
-//
-// Parse [`DEV_PHRASE`] secret uri with junction:
-//
-// ```
-// # use sp_core::crypto::{SecretUri, DeriveJunction, DEV_PHRASE, ExposeSecret};
-// # use std::str::FromStr;
-// let suri = SecretUri::from_str("//Alice").expect("Parse SURI");
-//
-// assert_eq!(vec![DeriveJunction::from("Alice").harden()], suri.junctions);
-// assert_eq!(DEV_PHRASE, suri.phrase.expose_secret());
-// assert!(suri.password.is_none());
-// ```
-//
-// Parse [`DEV_PHRASE`] secret ui with junction and password:
-//
-// ```
-// # use sp_core::crypto::{SecretUri, DeriveJunction, DEV_PHRASE, ExposeSecret};
-// # use std::str::FromStr;
-// let suri = SecretUri::from_str("//Alice///SECRET_PASSWORD").expect("Parse SURI");
-//
-// assert_eq!(vec![DeriveJunction::from("Alice").harden()], suri.junctions);
-// assert_eq!(DEV_PHRASE, suri.phrase.expose_secret());
-// assert_eq!("SECRET_PASSWORD", suri.password.unwrap().expose_secret());
-// ```
-//
-// Parse [`DEV_PHRASE`] secret ui with hex phrase and junction:
-//
-// ```
-// # use sp_core::crypto::{SecretUri, DeriveJunction, DEV_PHRASE, ExposeSecret};
-// # use std::str::FromStr;
-// let suri = SecretUri::from_str(
-// "0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a//Alice").expect("Parse SURI");
-//
-// assert_eq!(vec![DeriveJunction::from("Alice").harden()], suri.junctions);
-// assert_eq!("0xe5be9a5092b81bca64be81d212e7f2f9eba183bb7a90954f7b76361f6edb5c0a", suri.phrase.expose_secret());
-// assert!(suri.password.is_none());
-// ```
 type SecretURI struct {
 	// The phrase to derive the private key.
 	// This can either be a 64-bit hex string or a BIP-39 key phrase.
@@ -196,6 +159,7 @@ type SecretURI struct {
 	Junctions []DeriveJunction
 }
 
+// NewSecretURI is contructor for SecretURI
 func NewSecretURI(s string) (SecretURI, error) {
 	matches := secretPhraseRegex.FindStringSubmatch(s)
 	if matches == nil {
@@ -235,7 +199,7 @@ func NewSecretURI(s string) (SecretURI, error) {
 	}, nil
 }
 
-// Trait suitable for typical cryptographic PKI key pair type.
+// Pair is an interface suitable for typical cryptographic PKI key pair type.
 //
 // For now it just specifies how to create a key from a phrase and derivation path.
 type Pair[Seed, Signature any] interface {

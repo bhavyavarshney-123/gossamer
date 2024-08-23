@@ -46,7 +46,7 @@ func newTestPublic(t *testing.T, index uint8) app.Public {
 	for i := range data {
 		data[i] = index
 	}
-	pub, err := app.NewPublicFromSlice(data)
+	pub, err := app.NewPublic(data)
 	if err != nil {
 		t.Fatal(err)
 	}

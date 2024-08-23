@@ -203,7 +203,7 @@ func (j *GrandpaJustification[Hash, N]) Verify(setID uint64, authorities primiti
 	var weights []grandpa.IDWeight[string]
 	for _, authority := range authorities {
 		weight := grandpa.IDWeight[string]{
-			ID:     string(authority.AuthorityID.ToRawVec()),
+			ID:     string(authority.AuthorityID.Bytes()),
 			Weight: uint64(authority.AuthorityWeight),
 		}
 		weights = append(weights, weight)
@@ -228,7 +228,7 @@ func (j *GrandpaJustification[Hash, N]) verifyWithVoterSet(
 		signedPrecommits = append(signedPrecommits, grandpa.SignedPrecommit[Hash, N, string, string]{
 			Precommit: pc.Precommit,
 			Signature: string(pc.Signature[:]),
-			ID:        string(pc.ID.ToRawVec()),
+			ID:        string(pc.ID.Bytes()),
 		})
 	}
 	commitValidationResult, err := grandpa.ValidateCommit[Hash, N, string, string](

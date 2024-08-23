@@ -14,50 +14,52 @@ import (
 
 var logger = log.NewFromGlobal(log.AddContext("consensus", "grandpa"))
 
-// Identity of a Grandpa authority.
+// AuthorityID is the identity of a Grandpa authority.
 type AuthorityID = app.Public
 
-func NewAuthorityIDFromSlice(data []byte) (AuthorityID, error) {
-	return app.NewPublicFromSlice(data)
+// NewAuthorityID is constructor for AuthorityID
+func NewAuthorityID(data []byte) (AuthorityID, error) {
+	return app.NewPublic(data)
 }
 
-// Signature for a Grandpa authority.
+// AuthoritySignature is the signature for a Grandpa authority.
 type AuthoritySignature = app.Signature
 
-// The `ConsensusEngineId` of GRANDPA.
+// GrandpaEngineID is the ConsensusEngineID of GRANDPA.
 var GrandpaEngineID = runtime.ConsensusEngineID{'F', 'R', 'N', 'K'}
 
-// The weight of an authority.
+// AuthorityWeight is the weight of an authority.
 type AuthorityWeight uint64
 
-// The index of an authority.
+// AuthorityIndex is the index of an authority.
 type AuthorityIndex uint64
 
-// The monotonic identifier of a GRANDPA set of authorities.
+// SetID is the monotonic identifier of a GRANDPA set of authorities.
 type SetID uint64
 
-// The round indicator.
+// RoundNumber is the round indicator.
 type RoundNumber uint64
 
+// AuthorityIDWeight is struct containing AuthorityID and AuthorityWeight
 type AuthorityIDWeight struct {
 	AuthorityID
 	AuthorityWeight
 }
 
-// A list of Grandpa authorities with associated weights.
+// AuthorityList is a list of Grandpa authorities with associated weights.
 type AuthorityList []AuthorityIDWeight
 
-// A signed message.
+// SignedMessage is a signed message.
 type SignedMessage[H, N any] grandpa.SignedMessage[H, N, AuthoritySignature, AuthorityID]
 
-// A commit message for this chain's block type.
+// Commit is a commit message for this chain's block type.
 type Commit[H, N any] grandpa.Commit[H, N, AuthoritySignature, AuthorityID]
 
-// A GRANDPA justification for block finality, it includes a commit message and
-// an ancestry proof including all headers routing all precommit target blocks
-// to the commit target block. Due to the current voting strategy the precommit
-// targets should be the same as the commit target, since honest voters don't
-// vote past authority set change blocks.
+// GrandpaJustification is A GRANDPA justification for block finality, it includes
+// a commit message and an ancestry proof including all headers routing all
+// precommit target blocks to the commit target block. Due to the current voting
+// strategy the precommit targets should be the same as the commit target, since
+// honest voters don't vote past authority set change blocks.
 //
 // This is meant to be stored in the db and passed around the network to other
 // nodes, and are used by syncing nodes to prove authority set handoffs.
@@ -67,8 +69,9 @@ type GrandpaJustification[Ordered runtime.Hash, N runtime.Number] struct {
 	VoteAncestries []runtime.Header[N, Ordered]
 }
 
-// Check a message signature by encoding the message as a localised payload and
-// verifying the provided signature using the expected authority id.
+// CheckMessageSignature will check a message signature by encoding the message as
+// a localised payload and verifying the provided signature using the expected
+// authority id.
 func CheckMessageSignature[H comparable, N constraints.Unsigned](
 	message grandpa.Message[H, N],
 	id AuthorityID,
@@ -85,8 +88,7 @@ func CheckMessageSignature[H comparable, N constraints.Unsigned](
 	return valid
 }
 
-// Encode round message localised to a given round and set id using the given
-// buffer.
+// LocalizedPayload will encode round message localised to a given round and set id.
 func LocalizedPayload(round RoundNumber, setID SetID, message any) []byte {
 	return scale.MustMarshal(struct {
 		Message any

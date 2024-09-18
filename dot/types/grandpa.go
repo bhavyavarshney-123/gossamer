@@ -281,3 +281,39 @@ type GrandpaEquivocationProof struct {
 	SetID        uint64
 	Equivocation GrandpaEquivocationEnum
 }
+
+type AuthoritySetChangeEvent struct {
+	SetID  uint64
+	Number uint
+}
+
+type AuthoritySetChange struct {
+	//changes maps block numbers to set ids
+	changesAt []uint
+	changes   map[uint]uint64
+}
+
+func NewAuthoritySetChange() *AuthoritySetChange {
+	return &AuthoritySetChange{
+		changesAt: make([]uint, 0),
+		changes:   make(map[uint]uint64),
+	}
+}
+
+func (asc *AuthoritySetChange) Insert(setID uint64, number uint) {
+	asc.changesAt = append(asc.changesAt, number)
+	asc.changes[number] = setID
+}
+
+func (asc *AuthoritySetChange) From(blockNumber uint) []AuthoritySetChangeEvent {
+	changes := make([]AuthoritySetChangeEvent, 0)
+	for _, blockNumber := range asc.changesAt {
+		changes = append(changes,
+			AuthoritySetChangeEvent{
+				setID:  asc.changes[blockNumber],
+				number: blockNumber,
+			},
+		)
+	}
+	return changes
+}

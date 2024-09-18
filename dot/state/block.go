@@ -51,17 +51,18 @@ var (
 // BlockState contains the historical block data of the blockchain, including block headers and bodies.
 // It wraps the blocktree (which contains unfinalised blocks) and the database (which contains finalised blocks).
 type BlockState struct {
-	bt                *blocktree.BlockTree
-	baseState         *BaseState
-	dbPath            string
-	db                BlockStateDatabase
-	lock              sync.RWMutex
-	genesisHash       common.Hash
-	lastFinalised     common.Hash
-	lastRound         uint64
-	lastSetID         uint64
-	unfinalisedBlocks *hashToBlockMap
-	tries             *Tries
+	bt                 *blocktree.BlockTree
+	baseState          *BaseState
+	dbPath             string
+	db                 BlockStateDatabase
+	lock               sync.RWMutex
+	genesisHash        common.Hash
+	lastFinalised      common.Hash
+	lastRound          uint64
+	lastSetID          uint64
+	unfinalisedBlocks  *hashToBlockMap
+	tries              *Tries
+	authoritiesChanges types.AuthoritySetChange
 
 	// State variables
 	pausedLock sync.RWMutex
@@ -959,4 +960,8 @@ func (bs *BlockState) StoreRuntime(hash common.Hash, rt runtime.Instance) {
 // GetNonFinalisedBlocks get all the blocks in the blocktree
 func (bs *BlockState) GetNonFinalisedBlocks() []common.Hash {
 	return bs.bt.GetAllBlocks()
+}
+
+func (bs *BlockState) GetAuthoritesChanges() types.AuthoritySetChange {
+	return bs.authoritiesChanges
 }
